@@ -1,6 +1,5 @@
 <template>
   <div id="app">
-
     <GameStage></GameStage>
   </div>
 </template>

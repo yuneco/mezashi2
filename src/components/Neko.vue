@@ -22,9 +22,10 @@ export default createComponent({
   props: {
     pos: { type: Object, default: () => new Pos(0, 0, 0) },
     s: { type: Number, default: 1 },
-    groundY: { type: Number, default: 0 }
+    groundY: { type: Number, default: 0 },
+    action: { type: String, default: 'walk' }
   },
-  setup () {
+  setup (props) {
     const hitBody = ref<Vue>()
     const partsPos = reactive({
       taR: 0,
@@ -49,11 +50,25 @@ export default createComponent({
       return [BASE * localPos.sx, BASE * localPos.sy]
     })
     const actions = {
+      stay: async () => {
+        Tween.to(localPos, { sy: 1 }, 300)
+        await Tween.to(partsPos, { amFrR: -40, lgFrR: -40, amBkR: 0, lgBkR: 0, hdR: 0, taR: 0 }, 300)
+      },
       walk: async () => {
         Tween.to(localPos, { sy: 0.8 }, 300)
         await Tween.to(partsPos, { amFrR: 0, lgFrR: 0, amBkR: -40, lgBkR: -40, hdR: 15, taR: 40 }, 300)
         Tween.to(localPos, { sy: 1.0 }, 300)
         await Tween.to(partsPos, { amFrR: -40, lgFrR: -40, amBkR: 0, lgBkR: 0, hdR: 0, taR: 0 }, 300)
+      },
+      jump: async () => {
+        Tween.to(localPos, { sy: 1.2, y: -50 }, 300, 'ease-out')
+        await Tween.to(partsPos, { amFrR: -40, lgFrR: -40, amBkR: -40, lgBkR: -40, hdR: 15, taR: 40 }, 300)
+        Tween.to(localPos, { sy: 1.0, y: 0 }, 300, 'ease-in')
+        await Tween.to(partsPos, { amFrR: -40, lgFrR: -40, amBkR: 0, lgBkR: 0, hdR: 0, taR: 0 }, 300)
+      },
+      default: async () => {
+        if (props.action === 'walk') { return actions.walk() }
+        if (props.action === 'jump') { return actions.jump() }
       }
     }
 
@@ -70,10 +85,4 @@ export default createComponent({
 </script>
 
 <style lang="scss" scoped>
-.root {
-  border: 1px solid blue;
-}
-.nekochan {
-  border: 1px solid red;
-}
 </style>

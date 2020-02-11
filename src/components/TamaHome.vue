@@ -14,6 +14,8 @@
       <ECont :y="-groundRound" :dur="dur">
         <TamaSan ref="tamasanMain"
           @gameover="$emit('gameover')"
+          @jumpstart="$emit('jumpstart')"
+          @jumpend="$emit('jumpend')"
         />
       </ECont>
     </ECont>

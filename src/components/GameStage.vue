@@ -14,20 +14,24 @@
         color="#8cc2c0"
         :a="planet === activePlanet ? 1 : 0.5"
         :round="planet.round"
+        :hasCat="planet === activePlanet"
+        :maxCat="2"
         :pos="planet.pos" :size="planet.size" />
 
       <TamaHome ref="tamaHomeComp"
         :tamaX="debug.tamaX / 100"
         :groundPos="tamaHome.pos" :groundSize="tamaHome.size" :groundRound="tamaHome.round"
-        :dur="tamaHome.isJumping ? 3000 : 700"
+        :dur="tamaHome.isJumpingToNextPlanet ? 3000 : 700"
         @gameover="gameover"
+        @jumpstart="tamaEvents.jumpStart"
+        @jumpend="tamaEvents.jumpEnd"
       />
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { createComponent, reactive, computed, ref, onMounted } from '@vue/composition-api'
+import { createComponent, reactive, computed, ref, onMounted, onBeforeUnmount } from '@vue/composition-api'
 import TamaHome from './TamaHome.vue'
 import Planet from './Planet.vue'
 import Pos from '../lib/Pos'
@@ -60,6 +64,7 @@ export default createComponent({
       pos: computed<Pos>(() => activePlanet.value.pos),
       size: computed<Size>(() => activePlanet.value.size),
       round: computed<number>(() => activePlanet.value.round),
+      isJumpingToNextPlanet: false,
       isJumping: false
     })
 
@@ -68,7 +73,8 @@ export default createComponent({
       height: window.innerHeight,
       cameraX: computed<number>(() => window.innerWidth / 2 - activePlanet.value.pos.x),
       cameraY: computed<number>(() => window.innerHeight / 2 - activePlanet.value.pos.y),
-      isGameover: false
+      isGameover: false,
+      isUnmounted: false
     })
 
     // 衝突判定
@@ -84,7 +90,9 @@ export default createComponent({
       if (planetCompsValue) {
         planetCompsValue.forEach(p => {
           const nekos = p.nekoComs as unknown as Vue[]
-          comps.push(...nekos)
+          if (nekos && nekos.length) {
+            comps.push(...nekos)
+          }
         })
       }
       collisionDetector.clear()
@@ -97,6 +105,16 @@ export default createComponent({
       stageData.isGameover = true
     }
 
+    // たまさんイベント
+    const tamaEvents = {
+      jumpStart () {
+        tamaHome.isJumping = true
+      },
+      jumpEnd () {
+        tamaHome.isJumping = false
+      }
+    }
+
     // デバッグ用色々
     const debug = reactive({
       tamaX: 0,
@@ -107,7 +125,7 @@ export default createComponent({
         tamaHomeCompValue.actions.jump()
       },
       nextPlanet: async () => {
-        tamaHome.isJumping = true
+        tamaHome.isJumpingToNextPlanet = true
         const crP = activePlanet.value
         planetsState.planets.push({
           id: Math.random(),
@@ -126,19 +144,22 @@ export default createComponent({
         const tamaHomeCompValue = tamaHomeComp.value
         if (!tamaHomeCompValue) { return }
         await tamaHomeCompValue.actions.jumpTurn()
-        tamaHome.isJumping = false
+        tamaHome.isJumpingToNextPlanet = false
       }
     })
 
     onMounted(() => {
-      window.setInterval(() => {
+      const collisionDetectTimer = window.setInterval(() => {
+        if (stageData.isUnmounted) {
+          window.clearInterval(collisionDetectTimer)
+        }
         detectCollision()
       }, 1000 / 20)
 
       const keyTimeLen = 710
       let nextKeyTime = Date.now()
       const nextKeyFrame = () => {
-        if (stageData.isGameover) { return }
+        if (stageData.isGameover || tamaHome.isJumping) { return }
         const ROUNDX = 800
         const STEPX = 30
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -157,9 +178,16 @@ export default createComponent({
           nextKeyTime += keyTimeLen
           nextKeyFrame()
         }
-        requestAnimationFrame(ticker)
+        if (!stageData.isUnmounted) {
+          requestAnimationFrame(ticker)
+        }
       }
       ticker()
+    })
+
+    onBeforeUnmount(() => {
+      console.log('Unmounted')
+      stageData.isUnmounted = true
     })
 
     return {
@@ -168,6 +196,7 @@ export default createComponent({
       planetsState,
       activePlanet,
       tamaHome,
+      tamaEvents,
       stageData,
       gameover,
       debug
