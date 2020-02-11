@@ -12,7 +12,9 @@
       :dur="dur"
     >
       <ECont :y="-groundRound" :dur="dur">
-        <TamaSan ref="tamasanMain" />
+        <TamaSan ref="tamasanMain"
+          @gameover="$emit('gameover')"
+        />
       </ECont>
     </ECont>
   </ECont>
@@ -37,7 +39,7 @@ export default createComponent({
     dur: { type: Number, default: 0 }
   },
   setup (props) {
-    const tamasanMain = ref(null)
+    const tamasanMain = ref<InstanceType<typeof TamaSan>>(null)
     const ground = reactive({
       x: computed<number>(() => props.groundPos.x),
       y: computed<number>(() => props.groundPos.y),
@@ -52,25 +54,29 @@ export default createComponent({
 
     const actions = {
       currentAction: computed<string>(() => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const comp = tamasanMain.value as any
-        return comp.currentAction
+        const tama = tamasanMain.value
+        if (!tama) { return '' }
+        return tama.currentAction
       }),
       async step (stepDur = 1000) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const comp = tamasanMain.value as any
-        await comp.step(stepDur)
+        const tama = tamasanMain.value
+        if (!tama) { return }
+        await tama.step(stepDur)
       },
       async jump () {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const comp = tamasanMain.value as any
-        await comp.waitActionEnd()
-        await comp.jump()
+        const tama = tamasanMain.value
+        if (!tama) { return }
+        await tama.jump()
       },
       async jumpTurn () {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const comp = tamasanMain.value as any
-        await comp.jumpTurn()
+        const tama = tamasanMain.value
+        if (!tama) { return }
+        await tama.jumpTurn()
+      },
+      async gameover () {
+        const tama = tamasanMain.value
+        if (!tama) { return }
+        await tama.gameover()
       }
     }
 

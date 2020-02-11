@@ -10,14 +10,17 @@
       }"
     >
       <Planet v-for="planet in planetsState.planets" :key="planet.id"
+        ref="planetComps"
         color="#8cc2c0"
         :a="planet === activePlanet ? 1 : 0.5"
         :round="planet.round"
         :pos="planet.pos" :size="planet.size" />
+
       <TamaHome ref="tamaHomeComp"
         :tamaX="debug.tamaX / 100"
         :groundPos="tamaHome.pos" :groundSize="tamaHome.size" :groundRound="tamaHome.round"
         :dur="tamaHome.isJumping ? 3000 : 700"
+        @gameover="gameover"
       />
     </div>
   </div>
@@ -29,6 +32,7 @@ import TamaHome from './TamaHome.vue'
 import Planet from './Planet.vue'
 import Pos from '../lib/Pos'
 import Size from '../lib/Size'
+import CollisionDetector from '../lib/CollisionDetector'
 
 export default createComponent({
   components: {
@@ -36,7 +40,8 @@ export default createComponent({
     Planet
   },
   setup () {
-    const tamaHomeComp = ref(TamaHome)
+    const tamaHomeComp = ref<InstanceType<typeof TamaHome>>(null)
+    const planetComps = ref<InstanceType<typeof Planet>[]>(null)
 
     const planetsState = reactive({
       activeIndex: 0,
@@ -62,16 +67,44 @@ export default createComponent({
       width: window.innerWidth,
       height: window.innerHeight,
       cameraX: computed<number>(() => window.innerWidth / 2 - activePlanet.value.pos.x),
-      cameraY: computed<number>(() => window.innerHeight / 2 - activePlanet.value.pos.y)
+      cameraY: computed<number>(() => window.innerHeight / 2 - activePlanet.value.pos.y),
+      isGameover: false
     })
 
+    // 衝突判定
+    const collisionDetector = new CollisionDetector()
+    const detectCollision = () => {
+      const planetCompsValue = planetComps.value
+      const tamaHomeCompValue = tamaHomeComp.value
+      const tama = tamaHomeCompValue ? tamaHomeCompValue.tamasanMain : null
+      const comps: Vue[] = []
+      if (tama) {
+        comps.push(tama as unknown as Vue)
+      }
+      if (planetCompsValue) {
+        planetCompsValue.forEach(p => {
+          const nekos = p.nekoComs as unknown as Vue[]
+          comps.push(...nekos)
+        })
+      }
+      collisionDetector.clear()
+      collisionDetector.add(...comps)
+      collisionDetector.detect()
+    }
+
+    // ゲームオーバー時
+    const gameover = () => {
+      stageData.isGameover = true
+    }
+
+    // デバッグ用色々
     const debug = reactive({
       tamaX: 0,
       planetR: 0,
       jump: () => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const tama = tamaHomeComp.value as any
-        tama.actions.jump()
+        const tamaHomeCompValue = tamaHomeComp.value
+        if (!tamaHomeCompValue) { return }
+        tamaHomeCompValue.actions.jump()
       },
       nextPlanet: async () => {
         tamaHome.isJumping = true
@@ -83,22 +116,29 @@ export default createComponent({
             180 + (Math.random() - 0.5) * 50
           ),
           size: new Size(300 + Math.random() * 100, 400 + Math.random() * 100),
-          round: 20 + Math.random() * 100
+          round: 20 + Math.random() * 20
         })
         if (planetsState.planets.length >= 3) {
           planetsState.planets.shift()
         } else {
           planetsState.activeIndex += 1
         }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const tama = tamaHomeComp.value as any
-        await tama.actions.jumpTurn()
+        const tamaHomeCompValue = tamaHomeComp.value
+        if (!tamaHomeCompValue) { return }
+        await tamaHomeCompValue.actions.jumpTurn()
         tamaHome.isJumping = false
       }
     })
 
     onMounted(() => {
       window.setInterval(() => {
+        detectCollision()
+      }, 1000 / 20)
+
+      const keyTimeLen = 710
+      let nextKeyTime = Date.now()
+      const nextKeyFrame = () => {
+        if (stageData.isGameover) { return }
         const ROUNDX = 800
         const STEPX = 30
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -109,17 +149,27 @@ export default createComponent({
           debug.tamaX = Math.ceil(debug.tamaX / ROUNDX) * ROUNDX
           debug.nextPlanet()
         } else {
-          tama.actions.step(700)
+          tama.actions.step(keyTimeLen - 20)
         }
-      }, 710)
+      }
+      const ticker = () => {
+        if (Date.now() > nextKeyTime) {
+          nextKeyTime += keyTimeLen
+          nextKeyFrame()
+        }
+        requestAnimationFrame(ticker)
+      }
+      ticker()
     })
 
     return {
       tamaHomeComp,
+      planetComps,
       planetsState,
       activePlanet,
       tamaHome,
       stageData,
+      gameover,
       debug
     }
   }
