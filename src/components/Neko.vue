@@ -25,8 +25,9 @@ export default createComponent({
     groundY: { type: Number, default: 0 },
     action: { type: String, default: 'walk' }
   },
-  setup (props) {
+  setup (props, ctx) {
     const hitBody = ref<Vue>()
+    const isAlive = ref<boolean>(true)
     const partsPos = reactive({
       taR: 0,
       amBkR: 0,
@@ -55,17 +56,27 @@ export default createComponent({
         await Tween.to(partsPos, { amFrR: -40, lgFrR: -40, amBkR: 0, lgBkR: 0, hdR: 0, taR: 0 }, 300)
       },
       walk: async () => {
+        if (!isAlive.value) { return }
         Tween.to(localPos, { sy: 0.8 }, 300)
         await Tween.to(partsPos, { amFrR: 0, lgFrR: 0, amBkR: -40, lgBkR: -40, hdR: 15, taR: 40 }, 300)
+        if (!isAlive.value) { return }
         Tween.to(localPos, { sy: 1.0 }, 300)
         await Tween.to(partsPos, { amFrR: -40, lgFrR: -40, amBkR: 0, lgBkR: 0, hdR: 0, taR: 0 }, 300)
       },
       jump: async () => {
+        if (!isAlive.value) { return }
         Tween.to(localPos, { sy: 1.2, y: -50 }, 300, 'ease-out')
         await Tween.to(partsPos, { amFrR: -40, lgFrR: -40, amBkR: -40, lgBkR: -40, hdR: 15, taR: 40 }, 300)
         Tween.to(localPos, { sy: 1.0, y: 0 }, 300, 'ease-in')
         await Tween.to(partsPos, { amFrR: -40, lgFrR: -40, amBkR: 0, lgBkR: 0, hdR: 0, taR: 0 }, 300)
       },
+      drop: async () => {
+        await Tween.to(localPos, {}, 0)
+        await Tween.to(localPos, { r: 180, y: -120 }, 700, 'ease-out')
+        await Tween.to(localPos, { r: 360, y: 80 }, 500, 'ease-in')
+        await Tween.to(localPos, { r: 0, sx: 0, sy: 0 }, 0)
+      },
+
       default: async () => {
         if (props.action === 'walk') { return actions.walk() }
         if (props.action === 'jump') { return actions.jump() }
@@ -76,10 +87,24 @@ export default createComponent({
     onMounted(() => {
       const hitBodyComp = hitBody.value
       if (!hitBodyComp) { return }
-      const onhit = (target: Vue, name: string, index: number) => { console.log('neko hit with: ', name, target, index) }
+      const onhit = (target: Vue, name: string) => {
+        if (name === 'neko') { return } // 猫同士の衝突はなにもしない
+        actions.drop()
+        isAlive.value = false
+        ctx.emit('drop')
+      }
       initCollisionDef(hitBodyComp, 'neko', onhit)
     })
-    return { partsPos, actions, localPos, totalScale, hitBody, collisionDef, collisionBox }
+    return {
+      isAlive,
+      partsPos,
+      actions,
+      localPos,
+      totalScale,
+      hitBody,
+      collisionDef,
+      collisionBox
+    }
   }
 })
 </script>

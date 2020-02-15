@@ -1,10 +1,6 @@
 <template>
   <div class="game-stage-root">
     <div class="stageEventLayer" @click.capture.self="clickStage"></div>
-    <input type="range" min="0" max="1600" v-model="debug.tamaX">
-    <button @click="debug.jump">Jump</button>
-    <button @click="debug.nextPlanet">NextPlanet</button>
-
     <div class="stage"
       :style="{
         transform: `translate(${stageData.cameraX}px, ${stageData.cameraY}px)`
@@ -16,7 +12,7 @@
         :a="planet === activePlanet ? 1 : 0.5"
         :round="planet.round"
         :hasCat="planet === activePlanet"
-        :maxCat="1"
+        :maxCat="3"
         :pos="planet.pos" :size="planet.size" />
 
       <TamaHome ref="tamaHomeComp"
@@ -91,6 +87,7 @@ export default createComponent({
       const planetCompsValue = planetComps.value
       const tamaHomeCompValue = tamaHomeComp.value
       const tama = tamaHomeCompValue ? tamaHomeCompValue.tamasanMain : null
+      const mezhashiLayerCompValue = mezashiLayerComp.value
       const comps: Vue[] = []
       if (tama) {
         comps.push(tama as unknown as Vue)
@@ -102,6 +99,13 @@ export default createComponent({
             comps.push(...nekos)
           }
         })
+      }
+      if (mezhashiLayerCompValue) {
+        const mezashiComps = mezhashiLayerCompValue.mezashiComps
+        if (mezashiComps && mezashiComps.length) {
+          const mezashis = mezashiComps as unknown as Vue[]
+          comps.push(...mezashis)
+        }
       }
       collisionDetector.clear()
       collisionDetector.add(...comps)

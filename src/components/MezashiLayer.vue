@@ -1,6 +1,7 @@
 <template>
   <div class="mezashi-layer-root">
     <Mezashi v-for="mezashi in mezashisData" :key="mezashi.id"
+      ref="mezashiComps"
       :pos="mezashi.fireat"
       @fin="onFinMezashi(mezashi)"
     />
@@ -8,7 +9,7 @@
 </template>
 
 <script lang="ts">
-import { createComponent, reactive } from '@vue/composition-api'
+import { createComponent, reactive, ref } from '@vue/composition-api'
 import Mezashi from './Mezashi.vue'
 import Pos from '../lib/Pos'
 
@@ -22,6 +23,7 @@ export default createComponent({
     Mezashi
   },
   setup () {
+    const mezashiComps = ref<InstanceType<typeof Mezashi>[]>(null)
     const mezashisData = reactive<MezashiData[]>([])
     /** 指定位置にメザシを追加 */
     const fire = (pos: Pos) => {
@@ -39,7 +41,7 @@ export default createComponent({
       }
     }
     return {
-      mezashisData, fire, onFinMezashi
+      mezashisData, fire, onFinMezashi, mezashiComps
     }
   }
 })

@@ -6,12 +6,18 @@
     :w="planetSize.w" :h="planetSize.h"
     :a="a"
     :dur="2000"
-    :style="{
-      borderRadius: `${round}px`,
-      backgroundColor: color
-    }"
   >
-    <Neko ref="nekos" v-for="(neko, index) in nekosData.nekos" :key="neko.id" :pos="nekoPos.pos[index]" :groundY="round" :action="neko.action" />
+    <Neko ref="nekos" v-for="(neko, index) in nekosData.nekos" :key="neko.id"
+      :pos="nekoPos.pos[index]"
+      :groundY="round"
+      :action="neko.action"
+      @drop="nekoDroped(neko, index)"
+    />
+    <div class="glound"
+      :style="{
+        borderRadius: `${round}px`,
+        backgroundColor: color
+      }" />
   </ECont>
 </template>
 
@@ -25,6 +31,7 @@ import Angle8 from '../lib/Angle8'
 interface NekoState {
   id: string;
   startX: number;
+  stayTime: number | null;
   speed: number;
   started: number;
   action: 'walk' | 'jump';
@@ -53,8 +60,8 @@ export default createComponent({
     const nekoPos = reactive({
       pos: computed<Pos[]>(() => {
         const nekos = nekosData.nekos
-        const time = nekosData.updateTime
         return nekos.map(neko => {
+          const time = neko.stayTime ?? nekosData.updateTime
           const sec = (time - neko.started) / 1000
           const x = sec * neko.speed + neko.startX
           return Angle8.at(x, props.size.w - props.round * 2, props.size.h - props.round * 2).add(new Pos(props.round, props.round, 0))
@@ -66,10 +73,16 @@ export default createComponent({
       nekosData.nekos.push({
         id: `neko-${Math.random()}`,
         startX: 806,
+        stayTime: null,
         speed: -(0.5 + Math.random() * 0.5),
         started: Date.now(),
         action: Math.random() > 0.5 ? 'walk' : 'jump'
       })
+    }
+
+    const nekoDroped = (neko: NekoState, index: number) => {
+      console.log('nekochan droped', neko, index)
+      neko.stayTime = Date.now()
     }
 
     const data = reactive({
@@ -78,28 +91,10 @@ export default createComponent({
     const planetPos = computed<Pos>(() => data.isInited ? props.pos as Pos : new Pos(props.pos.x, props.pos.y, -90))
     const planetSize = computed<Size>(() => data.isInited ? props.size as Size : new Size(0, 0))
 
-    const debug = reactive({
-      catWalk: async () => {
-        for (;;) {
-          if (isUnmounted) {
-            // console.log('Finish catwalk: unmounted')
-            break
-          }
-          const nekoComps = nekos.value
-          if (!nekoComps) {
-            await new Promise<void>(resolve => setTimeout(resolve, 500))
-            // console.log('No cats at this time')
-            continue
-          }
-          nekosData.updateTime = Date.now()
-          const promises: Promise<void>[] = nekoComps.map(nekoComp => nekoComp.actions.default())
-          await Promise.all(promises)
-        }
-      }
-    })
-
-    const nekoComs = computed(() => {
-      return props.hasCat ? (nekos.value as unknown as Vue[]) : []
+    const nekoComs = computed<Vue[]>(() => {
+      const nekosVal = nekos.value
+      if (!nekosVal) { return [] }
+      return props.hasCat ? (nekosVal.filter(n => n.isAlive) as unknown as Vue[]) : []
     })
 
     onMounted(() => {
@@ -115,7 +110,18 @@ export default createComponent({
           addNeko()
         }
       }, 1500)
-      debug.catWalk()
+      const catWalkTimer = window.setInterval(() => {
+        if (isUnmounted) {
+          window.clearInterval(catWalkTimer)
+          return
+        }
+        const nekoComps = nekos.value
+        if (!nekoComps) { return }
+        nekosData.updateTime = Date.now()
+        nekoComps.forEach(nekoComp => {
+          nekoComp.actions.default()
+        })
+      }, 700)
     })
     onBeforeUnmount(() => {
       isUnmounted = true
@@ -127,6 +133,7 @@ export default createComponent({
       nekoPos, // computed
       nekoComs,
       addNeko,
+      nekoDroped,
       data,
       planetPos,
       planetSize
@@ -138,5 +145,12 @@ export default createComponent({
 <style lang="scss" scoped>
 .planet-root {
   box-sizing: border-box;
+  .glound {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
 }
 </style>
