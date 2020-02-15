@@ -1,5 +1,7 @@
 <template>
-  <div class="game-stage-root">
+  <div class="game-stage-root"
+    @click.capture.self="clickStage"
+  >
     <input type="range" min="0" max="1600" v-model="debug.tamaX">
     <button @click="debug.jump">Jump</button>
     <button @click="debug.nextPlanet">NextPlanet</button>
@@ -26,6 +28,10 @@
         @jumpstart="tamaEvents.jumpStart"
         @jumpend="tamaEvents.jumpEnd"
       />
+
+      <MezashiLayer
+        ref="mezashiLayerComp"
+      />
     </div>
   </div>
 </template>
@@ -34,6 +40,7 @@
 import { createComponent, reactive, computed, ref, onMounted, onBeforeUnmount } from '@vue/composition-api'
 import TamaHome from './TamaHome.vue'
 import Planet from './Planet.vue'
+import MezashiLayer from './MezashiLayer.vue'
 import Pos from '../lib/Pos'
 import Size from '../lib/Size'
 import CollisionDetector from '../lib/CollisionDetector'
@@ -41,11 +48,13 @@ import CollisionDetector from '../lib/CollisionDetector'
 export default createComponent({
   components: {
     TamaHome,
-    Planet
+    Planet,
+    MezashiLayer
   },
   setup () {
     const tamaHomeComp = ref<InstanceType<typeof TamaHome>>(null)
     const planetComps = ref<InstanceType<typeof Planet>[]>(null)
+    const mezashiLayerComp = ref<InstanceType<typeof MezashiLayer>>(null)
 
     const planetsState = reactive({
       activeIndex: 0,
@@ -113,6 +122,25 @@ export default createComponent({
       jumpEnd () {
         tamaHome.isJumping = false
       }
+    }
+
+    // メザシ発射
+    const fireMezashi = (destX: number, destY: number) => {
+      const mezashiLayer = mezashiLayerComp.value
+      const tama = tamaHomeComp.value
+      if (!mezashiLayer || !tama) { return }
+      const tamaPos = tama.getTamaPos()
+      if (!tamaPos) { return }
+      const tamaStagePos = tamaPos.add(new Pos(stageData.cameraX, stageData.cameraY, 0))
+      console.log(tamaStagePos)
+      const rad = Math.atan((destY - tamaStagePos.y) / (destX - tamaStagePos.x))
+      const angle = rad / Math.PI * 180
+      mezashiLayer.fire(new Pos(tamaStagePos.x, tamaStagePos.y, angle))
+    }
+    const clickStage = (ev: MouseEvent) => {
+      // console.log('click at', ev.offsetX, ev.offsetY)
+      // console.log('in stage', ev.offsetX - stageData.cameraX, ev.offsetY - stageData.cameraY)
+      fireMezashi(ev.offsetX - stageData.cameraX, ev.offsetY - stageData.cameraY)
     }
 
     // デバッグ用色々
@@ -193,12 +221,14 @@ export default createComponent({
     return {
       tamaHomeComp,
       planetComps,
+      mezashiLayerComp,
       planetsState,
       activePlanet,
       tamaHome,
       tamaEvents,
       stageData,
       gameover,
+      clickStage,
       debug
     }
   }
@@ -207,7 +237,16 @@ export default createComponent({
 </script>
 
 <style lang="scss" scoped>
+.game-stage-root {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
 .stage {
   transition: transform 4s ease;
+  border: 1px solid red;
 }
 </style>

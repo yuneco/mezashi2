@@ -82,13 +82,13 @@ export default createComponent({
       catWalk: async () => {
         for (;;) {
           if (isUnmounted) {
-            console.log('Finish catwalk: unmounted')
+            // console.log('Finish catwalk: unmounted')
             break
           }
           const nekoComps = nekos.value
           if (!nekoComps) {
             await new Promise<void>(resolve => setTimeout(resolve, 500))
-            console.log('No cats at this time')
+            // console.log('No cats at this time')
             continue
           }
           nekosData.updateTime = Date.now()

@@ -54,6 +54,12 @@ export default createComponent({
       pos: computed<Pos>(() => Angle8.at(props.tamaX, ground.w, ground.h))
     })
 
+    const getTamaPos = (): Pos | null => {
+      const tamaCom = tamasanMain.value
+      if (!tamaCom) { return null }
+      return tamaCom.getTamaPos()
+    }
+
     const actions = {
       currentAction: computed<string>(() => {
         const tama = tamasanMain.value
@@ -86,7 +92,8 @@ export default createComponent({
       tamasanMain,
       ground,
       tama,
-      actions
+      actions,
+      getTamaPos
     }
   }
 })

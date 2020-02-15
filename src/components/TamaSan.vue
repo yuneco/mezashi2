@@ -17,14 +17,19 @@
       :w="base.w" :h="base.h"
       :ox="50" :oy="100"
     >
-        <ECont
-          ref="hitBody"
-          img="/img/tama.svg"
-          :w="base.w" :h="base.h"
-          :r="turnAct.r"
-          :y="turnAct.y"
-          :dur="turnAct.dur"
-        />
+      <ECont
+        ref="hitBody"
+        img="/img/tama.svg"
+        :w="base.w" :h="base.h"
+        :r="turnAct.r"
+        :y="turnAct.y"
+        :dur="turnAct.dur"
+      >
+        <div class="pos-detector">
+          <div class="top-left" ref="detTL"></div>
+          <div class="bottom-right" ref="detBR"></div>
+        </div>
+      </ECont>
     </ECont>
   </ECont>
 </template>
@@ -33,6 +38,7 @@
 import { createComponent, reactive, ref, onMounted } from '@vue/composition-api'
 import Tween from '../lib/Tween'
 import useCollision from '../lib/UseCollision'
+import Pos from '../lib/Pos'
 
 export default createComponent({
   name: 'TamaSan',
@@ -113,11 +119,12 @@ export default createComponent({
     }
 
     const jump = async () => {
+      waitActionEnd(true)
       jumpAct.jumpCount++
       if (jumpAct.jumpCount === 2) { return }
       if (jumpAct.jumpCount === 3) {
-        await Tween.to(jumpAct, { y: -350, sy: 0.8, r: -20 }, 700, 'ease-out')
-        await Tween.to(jumpAct, { y: 0, sy: 0.8, r: 0 }, 1200, 'ease-in')
+        await Tween.to(jumpAct, { y: -350, sy: 0.8, r: -20 }, 500, 'ease-out')
+        await Tween.to(jumpAct, { y: 0, sy: 0.8, r: 0 }, 1300, 'ease-in')
         await Tween.to(jumpAct, { sy: 1.0 }, 300)
         jumpAct.jumpCount = 0
         ctx.emit('jumpend')
@@ -183,6 +190,22 @@ export default createComponent({
       initCollisionDef(hitBodyComp, 'tamasan', onhit)
     })
 
+    // たまさん測位
+    const detTL = ref<HTMLDivElement>(null)
+    const detBR = ref<HTMLDivElement>(null)
+    const getTamaPos = (): Pos | null => {
+      const tlEl = detTL.value
+      const brEl = detBR.value
+      if (!tlEl || !brEl) { return null }
+      const tl = tlEl.getBoundingClientRect()
+      const br = brEl.getBoundingClientRect()
+      const cx = (tl.x + br.x) / 2
+      const cy = (tl.y + br.y) / 2
+      const rad2ang = (rad: number) => rad / Math.PI * 180
+      const r = rad2ang(Math.atan((tl.y - br.y) / (tl.x - br.x))) + 135
+      return new Pos(cx, cy, r)
+    }
+
     return {
       hitBody,
       base,
@@ -196,8 +219,36 @@ export default createComponent({
       waitActionEnd,
       currentAction,
       collisionDef,
-      collisionBox
+      collisionBox,
+      detTL,
+      detBR,
+      getTamaPos
     }
   }
 })
 </script>
+
+<style lang="scss" scoped>
+.pos-detector {
+  position: absolute;
+  border: 1px solid red;
+  width: 100px;
+  height: 100px;
+  top: calc(50% - 50px);
+  left: calc(50% - 50px);
+  div {
+    position: absolute;
+    border: 1px solid blue;
+    width: 1px;
+    height: 1px;
+  }
+  .top-left {
+    left: 0;
+    top: 0;
+  }
+  .bottom-right {
+    bottom: 0;
+    right: 0;
+  }
+}
+</style>
