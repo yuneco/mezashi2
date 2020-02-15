@@ -1,7 +1,6 @@
 <template>
-  <div class="game-stage-root"
-    @click.capture.self="clickStage"
-  >
+  <div class="game-stage-root">
+    <div class="stageEventLayer" @click.capture.self="clickStage"></div>
     <input type="range" min="0" max="1600" v-model="debug.tamaX">
     <button @click="debug.jump">Jump</button>
     <button @click="debug.nextPlanet">NextPlanet</button>
@@ -17,7 +16,7 @@
         :a="planet === activePlanet ? 1 : 0.5"
         :round="planet.round"
         :hasCat="planet === activePlanet"
-        :maxCat="2"
+        :maxCat="1"
         :pos="planet.pos" :size="planet.size" />
 
       <TamaHome ref="tamaHomeComp"
@@ -131,15 +130,13 @@ export default createComponent({
       if (!mezashiLayer || !tama) { return }
       const tamaPos = tama.getTamaPos()
       if (!tamaPos) { return }
-      const tamaStagePos = tamaPos.add(new Pos(stageData.cameraX, stageData.cameraY, 0))
-      console.log(tamaStagePos)
-      const rad = Math.atan((destY - tamaStagePos.y) / (destX - tamaStagePos.x))
+      const cameraPos = new Pos(-stageData.cameraX, -stageData.cameraY, 0)
+      const tamaStagePos = tamaPos.add(cameraPos)
+      const rad = Math.atan2((destY - tamaStagePos.y), (destX - tamaStagePos.x))
       const angle = rad / Math.PI * 180
       mezashiLayer.fire(new Pos(tamaStagePos.x, tamaStagePos.y, angle))
     }
     const clickStage = (ev: MouseEvent) => {
-      // console.log('click at', ev.offsetX, ev.offsetY)
-      // console.log('in stage', ev.offsetX - stageData.cameraX, ev.offsetY - stageData.cameraY)
       fireMezashi(ev.offsetX - stageData.cameraX, ev.offsetY - stageData.cameraY)
     }
 
@@ -246,7 +243,18 @@ export default createComponent({
   overflow: hidden;
 }
 .stage {
+  position: absolute;
+  top: 0;
+  left: 0;
   transition: transform 4s ease;
   border: 1px solid red;
+}
+.stageEventLayer{
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 10;
 }
 </style>

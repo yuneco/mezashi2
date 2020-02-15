@@ -41,7 +41,7 @@ export default createComponent({
     pos: { type: Object, default: () => new Pos(0, 0, 0) },
     size: { type: Object, default: () => new Size(200, 200) },
     hasCat: { type: Boolean, default: true },
-    maxCat: { type: Number, default: 3 }
+    maxCat: { type: Number, default: 0 }
   },
   setup (props, ctx) {
     let isUnmounted = false

@@ -3,7 +3,7 @@
     :x="lane.pos.x" :y="lane.pos.y" :r="lane.pos.r" :s="lane.pos.s" :w="lane.size.w" :h="lane.size.h" :ox="0" :oy="50"
   >
     <ECont ref="hisBody" img="/img/mezashi.svg"
-      :x="bodyPos.x" :y="bodyPos.y" :w="116" :h="20" :dur="dur" easing="linear"
+      :x="bodyPos.x" :y="bodyPos.y" :w="116 * 0.7" :h="20 * 0.7" :s="0.7" :dur="dur" easing="linear"
     />
   </ECont>
 </template>
@@ -35,6 +35,7 @@ export default createComponent({
       y: 0
     })
     const fire = async () => {
+      await Tween.to(bodyPos, { x: 0 }, 0)
       await Tween.to(bodyPos, { x: LANE_LEN }, props.dur)
       ctx.emit('fin')
     }
