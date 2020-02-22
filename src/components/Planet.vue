@@ -27,6 +27,8 @@ import Neko from './Neko.vue'
 import Pos from '../lib/Pos'
 import Size from '../lib/Size'
 import Angle8 from '../lib/Angle8'
+import wait from '../lib/wait'
+import MathUtil from '../lib/MathUtil'
 
 interface NekoState {
   id: string;
@@ -48,7 +50,8 @@ export default createComponent({
     pos: { type: Object, default: () => new Pos(0, 0, 0) },
     size: { type: Object, default: () => new Size(200, 200) },
     hasCat: { type: Boolean, default: true },
-    maxCat: { type: Number, default: 0 }
+    maxCat: { type: Number, default: 0 },
+    catInterval: { type: Number, default: 1500 }
   },
   setup (props, ctx) {
     let isUnmounted = false
@@ -70,9 +73,10 @@ export default createComponent({
     })
 
     const addNeko = () => {
+      nekosData.updateTime = Date.now()
       nekosData.nekos.push({
         id: `neko-${Math.random()}`,
-        startX: 806,
+        startX: 1000 * 8 + MathUtil.between(6, 7),
         stayTime: null,
         speed: -(0.5 + Math.random() * 0.5),
         started: Date.now(),
@@ -97,19 +101,20 @@ export default createComponent({
       return props.hasCat ? (nekosVal.filter(n => n.isAlive) as unknown as Vue[]) : []
     })
 
-    onMounted(() => {
+    onMounted(async () => {
       ctx.root.$nextTick(() => {
         data.isInited = true
       })
-      const catAddTimer = window.setInterval(() => {
-        if (isUnmounted) {
-          window.clearInterval(catAddTimer)
-          return
-        }
-        if (nekosData.nekos.length < props.maxCat) {
-          addNeko()
-        }
-      }, 1500)
+      await wait(2500)
+      const bookAddNeko = (ms: number) => {
+        window.setTimeout(() => {
+          if (!isUnmounted && nekosData.nekos.length < props.maxCat) {
+            addNeko()
+            bookAddNeko(ms)
+          }
+        }, ms)
+      }
+      bookAddNeko(props.catInterval)
       const catWalkTimer = window.setInterval(() => {
         if (isUnmounted) {
           window.clearInterval(catWalkTimer)

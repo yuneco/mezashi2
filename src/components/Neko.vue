@@ -88,7 +88,7 @@ export default createComponent({
       const hitBodyComp = hitBody.value
       if (!hitBodyComp) { return }
       const onhit = (target: Vue, name: string) => {
-        if (name === 'neko') { return } // 猫同士の衝突はなにもしない
+        if (name === 'Neko') { return } // 猫同士の衝突はなにもしない
         actions.drop()
         isAlive.value = false
         ctx.emit('drop')

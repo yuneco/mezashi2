@@ -34,7 +34,6 @@ export default createComponent({
     }
     /** メザシ終了時のコールバック = mezashisDataから対象メザシを削除 */
     const onFinMezashi = (mezashi: MezashiData) => {
-      console.log('Mezashi fin', mezashi)
       const index = mezashisData.findIndex(v => v === mezashi)
       if (index > -1) {
         mezashisData.splice(index, 1)

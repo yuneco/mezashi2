@@ -24,10 +24,10 @@ const useCollision = () => {
     return box
   }
 
-  const initCollisionDef = (self: Vue, name: string, onhit: (c: Vue, name: string, i: number) => void) => {
+  const initCollisionDef = (self: Vue, name: string, onhit?: (c: Vue, name: string, i: number) => void) => {
     el.value = self
     collisionDef.tagName = name
-    collisionDef.onhit = onhit
+    collisionDef.onhit = onhit || null
   }
 
   return { collisionDef, initCollisionDef, collisionBox }

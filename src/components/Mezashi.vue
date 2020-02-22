@@ -32,11 +32,11 @@ export default createComponent({
       pos: computed<Pos>(() => props.pos)
     })
     const bodyPos = reactive({
-      x: 0,
+      x: -1,
       y: 0
     })
     const fire = async () => {
-      await Tween.to(bodyPos, { x: 0 }, 0)
+      await Tween.to(bodyPos, { x: 0 }, 10)
       await Tween.to(bodyPos, { x: LANE_LEN }, props.dur)
       ctx.emit('fin')
     }
@@ -50,8 +50,7 @@ export default createComponent({
       const hitBodyComp = hitBody.value
       if (!hitBodyComp) { return }
       collisionDef.safeMargin = 0
-      const onhit = (target: Vue, name: string, index: number) => { console.log('mezashi hit with: ', name, target, index) }
-      initCollisionDef(hitBodyComp, 'mezashi', onhit)
+      initCollisionDef(hitBodyComp, 'mezashi')
     })
 
     return {
@@ -62,7 +61,4 @@ export default createComponent({
 </script>
 
 <style lang="scss" scoped>
-.mexashi-root {
-  // border: 1px solid red;
-}
 </style>

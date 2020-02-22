@@ -100,7 +100,7 @@ export default createComponent({
 </script>
 
 <style lang="scss" scoped>
-.tama-hoo-root {
-  background: #eee;
+.tama-ho-root {
+  background: red;
 }
 </style>
