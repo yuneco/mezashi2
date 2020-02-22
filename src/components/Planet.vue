@@ -9,6 +9,7 @@
   >
     <Neko ref="nekos" v-for="(neko, index) in nekosData.nekos" :key="neko.id"
       :pos="nekoPos.pos[index]"
+      :s="charaScale"
       :groundY="round"
       :action="neko.action"
       @drop="nekoDroped(neko, index)"
@@ -51,6 +52,8 @@ export default createComponent({
     size: { type: Object, default: () => new Size(200, 200) },
     hasCat: { type: Boolean, default: true },
     maxCat: { type: Number, default: 0 },
+    catSpeed: { type: Number, default: 1.0 },
+    charaScale: { type: Number, default: 1 },
     catInterval: { type: Number, default: 1500 }
   },
   setup (props, ctx) {
@@ -72,20 +75,20 @@ export default createComponent({
       })
     })
 
-    const addNeko = () => {
+    const addNeko = (speed = 1.0) => {
       nekosData.updateTime = Date.now()
       nekosData.nekos.push({
         id: `neko-${Math.random()}`,
         startX: 1000 * 8 + MathUtil.between(6, 7),
         stayTime: null,
-        speed: -(0.5 + Math.random() * 0.5),
+        speed: -(0.5 + Math.random() * 0.5) * speed,
         started: Date.now(),
         action: Math.random() > 0.5 ? 'walk' : 'jump'
       })
     }
 
-    const nekoDroped = (neko: NekoState, index: number) => {
-      console.log('nekochan droped', neko, index)
+    const nekoDroped = (neko: NekoState) => {
+      ctx.emit('nekoDroped')
       neko.stayTime = Date.now()
     }
 
@@ -102,14 +105,15 @@ export default createComponent({
     })
 
     onMounted(async () => {
-      ctx.root.$nextTick(() => {
-        data.isInited = true
-      })
+      await wait(100)
+      // 地面が現れるアニメーション開始
+      data.isInited = true
+      // アニメーションが終わるあたりまで待つ
       await wait(2500)
       const bookAddNeko = (ms: number) => {
         window.setTimeout(() => {
           if (!isUnmounted && nekosData.nekos.length < props.maxCat) {
-            addNeko()
+            addNeko(props.catSpeed)
             bookAddNeko(ms)
           }
         }, ms)

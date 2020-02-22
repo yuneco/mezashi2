@@ -45,7 +45,7 @@ export default class CollisionDetector {
   add (...comps: Vue[]) {
     comps.forEach(c => {
       if (!isCollidableComponent(c)) {
-        console.warn('This component is not collidable', c)
+        // console.warn('This component is not collidable', c)
         return
       }
       if (this._comps.includes(c)) { return }

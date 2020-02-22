@@ -3,6 +3,7 @@
     <Mezashi v-for="mezashi in mezashisData" :key="mezashi.id"
       ref="mezashiComps"
       :pos="mezashi.fireat"
+      :s="charaScale"
       @fin="onFinMezashi(mezashi)"
     />
   </div>
@@ -21,6 +22,9 @@ interface MezashiData {
 export default createComponent({
   components: {
     Mezashi
+  },
+  props: {
+    charaScale: { type: Number, default: 1 }
   },
   setup () {
     const mezashiComps = ref<InstanceType<typeof Mezashi>[]>(null)

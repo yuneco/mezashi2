@@ -13,6 +13,8 @@
     >
       <ECont :y="-groundRound" :dur="dur">
         <TamaSan ref="tamasanMain"
+          :scale="tamaS"
+          :katsuoR="katsuoR"
           @gameover="$emit('gameover')"
           @jumpstart="$emit('jumpstart')"
           @jumpend="$emit('jumpend')"
@@ -35,9 +37,11 @@ export default createComponent({
   },
   props: {
     tamaX: { type: Number, default: 100 },
+    tamaS: { type: Number, default: 1.0 },
     groundPos: { type: Object, default: () => new Pos() },
     groundSize: { type: Object, default: () => new Size() },
     groundRound: { type: Number, default: 30 },
+    katsuoR: { type: Number, default: 0 },
     dur: { type: Number, default: 0 }
   },
   setup (props) {

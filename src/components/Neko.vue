@@ -1,5 +1,5 @@
 <template>
-<ECont :x="pos.x" :y="pos.y" :r="pos.r" :s="s" :w="1" :h="1" :dur="600">
+<ECont :x="pos.x" :y="pos.y" :r="pos.r" :s="1" :w="1" :h="1" :dur="600">
   <ECont class="nekochan" ref="hitBody" :x="-335 / 2" :y="-330 + localPos.y - groundY" :w="335" :h="330" :ox="50" :oy="100" :dur="localPos.dur" :easing="localPos.easing" :r="localPos.r" :s="totalScale" >
     <ECont img="/img/CatAmTora.svg" :w="77" :h="103" :x="49" :y="219" :ox="80" :oy="10" :dur="partsPos.dur" :easing="partsPos.easing" :r="partsPos.amBkR" />
     <ECont img="/img/CatLgTora.svg" :w="75" :h="109" :x="210" :y="220" :ox="80" :oy="10" :dur="partsPos.dur" :easing="partsPos.easing" :r="partsPos.lgBkR" />
@@ -17,6 +17,7 @@ import { reactive, createComponent, computed, ref, onMounted } from '@vue/compos
 import Tween from '../lib/Tween'
 import Pos from '../lib/Pos'
 import useCollision from '../lib/UseCollision'
+import playSound from '../lib/playSound'
 
 export default createComponent({
   props: {
@@ -47,7 +48,7 @@ export default createComponent({
       easing: 'ease'
     })
     const totalScale = computed<number[]>(() => {
-      const BASE = 0.2
+      const BASE = 0.2 * props.s
       return [BASE * localPos.sx, BASE * localPos.sy]
     })
     const actions = {
@@ -91,7 +92,10 @@ export default createComponent({
         if (name === 'Neko') { return } // 猫同士の衝突はなにもしない
         actions.drop()
         isAlive.value = false
-        ctx.emit('drop')
+        if (name === 'Mezashi') {
+          playSound('catch')
+          ctx.emit('drop', name === 'Mezashi')
+        }
       }
       initCollisionDef(hitBodyComp, 'neko', onhit)
     })

@@ -1,9 +1,14 @@
 <template>
   <div class="game-stage-root">
-    <span>{{ stageData.level }}</span>
+    <GameStateView
+      :level="stageData.level"
+      :score="stageData.score"
+      :bullet="stageData.bulletCount"
+    />
     <GameController class="controller"
-      @esc="nextPlanet"
+      @esc="escNow"
       @jump="tamaJump"
+      :escCount="stageData.escCount"
     />
 
     <div class="stageEventLayer" @click.capture.self="clickStage"></div>
@@ -14,12 +19,16 @@
     >
       <PlanetLayer ref="planetLayerComp"
         :level="stageData.level"
+        :charaScale="stageData.charaScale"
+        @nekoDroped="onMezashiHit"
       />
 
       <TamaHome ref="tamaHomeComp"
         :tamaX="tamaHome.tamaX / 100"
+        :tamaS="stageData.charaScale"
         :groundPos="tamaHome.pos" :groundSize="tamaHome.size" :groundRound="tamaHome.round"
         :dur="tamaHome.isJumpingToNextPlanet ? 3000 : 700"
+        :katsuoR="tamaHome.katsuoR"
         @gameover="gameover"
         @jumpstart="tamaEvents.jumpStart"
         @jumpend="tamaEvents.jumpEnd"
@@ -27,6 +36,7 @@
 
       <MezashiLayer
         ref="mezashiLayerComp"
+        :charaScale="stageData.charaScale"
       />
     </div>
   </div>
@@ -38,23 +48,37 @@ import TamaHome from './TamaHome.vue'
 import PlanetLayer from './PlanetLayer.vue'
 import MezashiLayer from './MezashiLayer.vue'
 import GameController from './GameController.vue'
+import GameStateView from './GameStateView.vue'
 import Pos from '../lib/Pos'
 import Size from '../lib/Size'
+import wait from '../lib/wait'
 import CollisionDetector from '../lib/CollisionDetector'
+import useKatsuoCannon from '../lib/UseKatsuoCannon'
+import playSound from '../lib/playSound'
 
 const ROUNDX = 800
+const charaScale = () => {
+  const MIN_H = 600
+  const MAX_H = 1200
+  const MIN_S = 0.6
+  const MAX_S = 1.2
+  const r = Math.max(0, Math.min(1, (window.innerHeight - MIN_H) / (MAX_H - MIN_H)))
+  return MIN_S + (MAX_S - MIN_S) * r
+}
 
 export default createComponent({
   components: {
     TamaHome,
     PlanetLayer,
     MezashiLayer,
-    GameController
+    GameController,
+    GameStateView
   },
-  setup () {
+  setup (props, ctx) {
     const tamaHomeComp = ref<InstanceType<typeof TamaHome>>(null)
     const planetLayerComp = ref<InstanceType<typeof PlanetLayer>>(null)
     const mezashiLayerComp = ref<InstanceType<typeof MezashiLayer>>(null)
+    const { fire, bulletCount } = useKatsuoCannon()
 
     const activePlanet = computed(() => {
       const comp = planetLayerComp.value
@@ -68,16 +92,21 @@ export default createComponent({
       round: computed<number>(() => activePlanet.value?.round || 0),
       isJumpingToNextPlanet: false,
       isJumping: false,
-      tamaX: 0
+      tamaX: 0,
+      katsuoR: 0
     })
 
     const stageData = reactive({
       width: window.innerWidth,
       height: window.innerHeight,
+      charaScale: charaScale(),
       cameraX: computed<number>(() => window.innerWidth / 2 - (activePlanet.value?.pos.x || 0)),
       cameraY: computed<number>(() => window.innerHeight / 2 - (activePlanet.value?.pos.y || 0)),
       isGameover: false,
       level: 1,
+      score: 0,
+      escCount: 2,
+      bulletCount: bulletCount,
       isUnmounted: false
     })
 
@@ -113,9 +142,11 @@ export default createComponent({
     }
 
     // ゲームオーバー時
-    const gameover = () => {
+    const gameover = async () => {
       stageData.isGameover = true
-      stageData.level = 1
+      playSound('gameover')
+      await wait(2000)
+      ctx.emit('end', stageData.score)
     }
 
     // たまさんイベント
@@ -135,14 +166,24 @@ export default createComponent({
       if (!mezashiLayer || !tama) { return }
       const tamaPos = tama.getTamaPos()
       if (!tamaPos) { return }
+      const fired = fire()
+      if (!fired) { return } // 弾切れで発射できなかった
       const cameraPos = new Pos(-stageData.cameraX, -stageData.cameraY, 0)
       const tamaStagePos = tamaPos.add(cameraPos)
       const rad = Math.atan2((destY - tamaStagePos.y), (destX - tamaStagePos.x))
       const angle = rad / Math.PI * 180
       mezashiLayer.fire(new Pos(tamaStagePos.x, tamaStagePos.y, angle))
+      const tamaAngle = tamaPos.r
+      const katsuoR = 360 - (tamaAngle - angle) % 360
+      tamaHome.katsuoR = katsuoR
+      playSound('shot')
     }
     const clickStage = (ev: MouseEvent) => {
       fireMezashi(ev.offsetX - stageData.cameraX, ev.offsetY - stageData.cameraY)
+    }
+    const onMezashiHit = () => {
+      if (stageData.isGameover) { return }
+      stageData.score++
     }
 
     const nextPlanet = async () => {
@@ -154,13 +195,21 @@ export default createComponent({
       tamaHome.isJumpingToNextPlanet = true
       const tamaHomeCompValue = tamaHomeComp.value
       if (!tamaHomeCompValue) { return }
+      playSound('jump2')
       await tamaHomeCompValue.actions.jumpTurn()
       tamaHome.isJumpingToNextPlanet = false
+    }
+
+    const escNow = () => {
+      if (!stageData.escCount) { return }
+      stageData.escCount--
+      nextPlanet()
     }
 
     const tamaJump = () => {
       const tamaHomeCompValue = tamaHomeComp.value
       if (!tamaHomeCompValue) { return }
+      playSound('jump')
       tamaHomeCompValue.actions.jump()
     }
 
@@ -177,9 +226,15 @@ export default createComponent({
       const nextKeyFrame = () => {
         if (stageData.isGameover || tamaHome.isJumping) { return }
         const STEPX = 30
+        const tama = tamaHomeComp.value
+        if (!tama) { return }
+        // computedがstring（アンラップされた型）と誤認されているのでanyに変換して読み取る
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const tama = tamaHomeComp.value as any
-        if (tama.actions.currentAction.value) { return }
+        const currentAction = (tama.actions.currentAction as any).value
+        if (currentAction) {
+          // console.log('skip move x: ' + currentAction)
+          return // アクション中であれば動かない
+        }
         tamaHome.tamaX += STEPX
         if (tamaHome.tamaX % ROUNDX >= ROUNDX * 0.6) {
           tamaHome.tamaX = Math.ceil(tamaHome.tamaX / ROUNDX) * ROUNDX
@@ -201,7 +256,6 @@ export default createComponent({
     })
 
     onBeforeUnmount(() => {
-      console.log('Unmounted')
       stageData.isUnmounted = true
     })
 
@@ -216,7 +270,9 @@ export default createComponent({
       gameover,
       clickStage,
       nextPlanet,
-      tamaJump
+      escNow,
+      tamaJump,
+      onMezashiHit
     }
   }
 
@@ -228,8 +284,8 @@ export default createComponent({
   position: absolute;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
 }
 .stage {
@@ -243,8 +299,8 @@ export default createComponent({
   position: absolute;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   z-index: 10;
 }
 .controller {

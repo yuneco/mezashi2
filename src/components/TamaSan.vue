@@ -17,38 +17,45 @@
       :w="base.w" :h="base.h"
       :ox="50" :oy="100"
     >
-      <ECont
+      <TamasanShape
         ref="hitBody"
-        img="/img/tama.svg"
-        :w="base.w" :h="base.h"
         :r="turnAct.r"
         :y="turnAct.y"
         :dur="turnAct.dur"
+        :katsuoR="katsuoR"
       >
         <div class="pos-detector">
           <div class="top-left" ref="detTL"></div>
           <div class="bottom-right" ref="detBR"></div>
         </div>
-      </ECont>
+      </TamasanShape>
     </ECont>
   </ECont>
 </template>
 
 <script lang="ts">
-import { createComponent, reactive, ref, onMounted } from '@vue/composition-api'
+import { createComponent, reactive, ref, onMounted, computed } from '@vue/composition-api'
 import Tween from '../lib/Tween'
 import useCollision from '../lib/UseCollision'
 import Pos from '../lib/Pos'
+import TamasanShape from './graphics/TamasanShape.vue'
+
+const BASE_SCALE = 0.5
 
 export default createComponent({
   name: 'TamaSan',
   props: {
+    scale: { type: Number, default: 1.0 },
+    katsuoR: { type: Number, default: 0 }
+  },
+  components: {
+    TamasanShape
   },
   setup (props, ctx) {
     const base = reactive({
-      w: 156,
-      h: 300,
-      s: 0.5
+      w: 204,
+      h: 298,
+      s: computed<number>(() => BASE_SCALE * props.scale)
     })
     const act = reactive({
       x: 0,
@@ -91,7 +98,6 @@ export default createComponent({
       if (!currentAction.value) { return Promise.resolve() }
       act.cancelled = act.cancelled || cancelAct
       turnAct.cancelled = turnAct.cancelled || cancelTurnAct
-      console.log(`Wait for end = ${currentAction.value}`)
       return new Promise<string>(resolve => {
         actionEndHandlers.push(resolve)
       })
@@ -202,7 +208,7 @@ export default createComponent({
       const cx = (tl.x + br.x) / 2
       const cy = (tl.y + br.y) / 2
       const rad2ang = (rad: number) => rad / Math.PI * 180
-      const r = rad2ang(Math.atan((tl.y - br.y) / (tl.x - br.x))) + 135
+      const r = rad2ang(Math.atan2((tl.y - br.y), (tl.x - br.x))) + 135
       return new Pos(cx, cy, r)
     }
 
@@ -231,14 +237,14 @@ export default createComponent({
 <style lang="scss" scoped>
 .pos-detector {
   position: absolute;
-  border: 1px solid red;
+  // border: 1px solid red;
   width: 100px;
   height: 100px;
   top: calc(50% - 50px);
   left: calc(50% - 50px);
   div {
     position: absolute;
-    border: 1px solid blue;
+    // border: 1px solid blue;
     width: 1px;
     height: 1px;
   }

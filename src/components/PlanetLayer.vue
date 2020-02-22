@@ -7,6 +7,9 @@
     :round="planet.round"
     :hasCat="planet === activePlanet"
     :maxCat="maxNekos"
+    :catSpeed="nekoSpeed"
+    :charaScale="charaScale"
+    @nekoDroped="$emit('nekoDroped')"
     :catInterval="4000 / maxNekos + 300"
     :pos="planet.pos" :size="planet.size" />
   </div>
@@ -63,7 +66,8 @@ export default createComponent({
     Planet
   },
   props: {
-    level: { type: Number, default: 1 }
+    level: { type: Number, default: 1 },
+    charaScale: { type: Number, default: 1 }
   },
   setup (props) {
     const planetComps = ref<InstanceType <typeof Planet>[]>(null)
@@ -82,7 +86,11 @@ export default createComponent({
     const maxNekos = computed<number>(() => {
       const MIN = 3
       const STEP = 1
-      return MIN + (props.level - 1) * STEP
+      const MAX = 12
+      return Math.min(MIN + (props.level - 1) * STEP, MAX)
+    })
+    const nekoSpeed = computed<number>(() => {
+      return 0.8 + props.level * 0.05
     })
 
     /** 現在のPlanetを返します */
@@ -105,7 +113,8 @@ export default createComponent({
       planetsState,
       activePlanet,
       nextPlanet,
-      maxNekos
+      maxNekos,
+      nekoSpeed
     }
   }
 })
