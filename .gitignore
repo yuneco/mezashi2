@@ -1,3 +1,5 @@
+dist
+public/snd/*
 
 # Created by https://www.gitignore.io/api/vue,macos,firebase
 # Edit at https://www.gitignore.io/?templates=vue,macos,firebase

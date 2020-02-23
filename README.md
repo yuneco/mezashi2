@@ -1,24 +1,7 @@
 # neko-mezahi2
 
-## Project setup
-```
-yarn install
-```
+## Credit
 
-### Compiles and hot-reloads for development
-```
-yarn serve
-```
+全ての音源データ(`public/snd/*`)は下記サイトより借用しています。
+https://soundeffect-lab.info/
 
-### Compiles and minifies for production
-```
-yarn build
-```
-
-### Lints and fixes files
-```
-yarn lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).

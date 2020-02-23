@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/4.3.1/workbox-sw.js");
 
 importScripts(
-  "/precache-manifest.def807e2f090c396704c03deffd80c20.js"
+  "/precache-manifest.b942906aeb8bd578fe15ad6b74203a83.js"
 );
 
 workbox.core.setCacheNameDetails({prefix: "neko-mezahi2"});
