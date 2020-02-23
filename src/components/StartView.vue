@@ -6,17 +6,33 @@
     <div class="btns">
       <button class="btn harf" @click="start">START</button>
     </div>
-    <div class="howto">
-      <img src="img/howtoplay.png" />
+
+    <div class="tabs">
+      <MenuTab :items="menuState.items" :selected="menuState.current" @selected="changeMenu" />
+      <div class="howto" v-show="isHowto">
+        <img src="img/howtoplay.png" />
+      </div>
+      <div class="ranking" v-show="isRanking">
+        <RankingList />
+      </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { createComponent } from '@vue/composition-api'
+import { createComponent, reactive, computed } from '@vue/composition-api'
+import MenuTab from './MenuTab.vue'
+import RankingList from './RankingList.vue'
 import playSound from '../lib/playSound'
 
+const MENU_HOWTO = 'あそびかた'
+const MENU_RANKING = 'ランキング'
+
 export default createComponent({
+  components: {
+    MenuTab,
+    RankingList
+  },
   props: {
     score: { type: Number, default: 0 }
   },
@@ -25,8 +41,21 @@ export default createComponent({
       playSound('btn')
       ctx.emit('start')
     }
+    const menuState = reactive({
+      items: [MENU_HOWTO, MENU_RANKING],
+      current: MENU_HOWTO
+    })
+    const changeMenu = (item: string) => {
+      menuState.current = item
+    }
+    const isHowto = computed(() => menuState.current === MENU_HOWTO)
+    const isRanking = computed(() => menuState.current === MENU_RANKING)
     return {
-      start
+      start,
+      menuState,
+      changeMenu,
+      isHowto,
+      isRanking
     }
   }
 })
@@ -75,6 +104,9 @@ export default createComponent({
       display: block;
     }
   }
+}
+.tabs {
+  padding: 20px 0 0 0;
 }
 .howto {
   padding-top: 20px;
