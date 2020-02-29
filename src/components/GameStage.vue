@@ -16,7 +16,7 @@
       @mousedown.capture.self.prevent="mousedownStage"
       @mouseup.capture.self="clickStage"
       @touchstart.capture.self.prevent="mousedownStage"
-      @touchend.capture.self="clickStage"
+      @touchend.capture.self="tapStage"
     >
     </div>
     <div class="stage"
@@ -200,6 +200,15 @@ export default createComponent({
       }
       fireMezashi(ev.offsetX - stageData.cameraX, ev.offsetY - stageData.cameraY, pressTime)
     }
+    const tapStage = (ev: TouchEvent) => {
+      const pressTime = Date.now() - stageData.lastClickTime
+      stageData.isCharging = false
+      if (sounds.charge) {
+        sounds.charge() // STOP
+      }
+      const touch = ev.changedTouches[0]
+      fireMezashi(touch.clientX - stageData.cameraX, touch.clientY - stageData.cameraY, pressTime)
+    }
     const mousedownStage = () => {
       stageData.lastClickTime = Date.now()
       stageData.isCharging = true
@@ -296,6 +305,7 @@ export default createComponent({
       stageData,
       gameover,
       clickStage,
+      tapStage,
       mousedownStage,
       nextPlanet,
       escNow,

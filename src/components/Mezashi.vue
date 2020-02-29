@@ -2,14 +2,16 @@
   <ECont class="mexashi-root"
     :x="lane.pos.x" :y="lane.pos.y" :r="lane.pos.r" :s="lane.pos.s" :w="lane.size.w" :h="lane.size.h" :ox="0" :oy="50"
   >
-    <ECont ref="hitBody" img="/img/Mezashi.svg" v-if="isActive"
+    <ECont ref="hitBody" img="/img/Mezashi2.svg" v-if="isActive" class="mezashi"
       :x="bodyPos.x" :y="bodyPos.y" :w="116 * baseScale" :h="20 * baseScale" :s="baseScale * s" :dur="dur" easing="linear"
-    />
+    >
+    </ECont>
   </ECont>
 </template>
 
 <script lang="ts">
 import { createComponent, reactive, computed, onMounted, ref } from '@vue/composition-api'
+// import MezashiGra from './graphics/Mezashi.vue'
 import Pos from '../lib/Pos'
 import Size from '../lib/Size'
 import Tween from '../lib/Tween'
@@ -28,6 +30,9 @@ export default createComponent({
     dur: { type: Number, default: 2000 },
     s: { type: Number, default: 1 },
     isBig: { type: Boolean, default: false }
+  },
+  components: {
+    // MezashiGra
   },
   setup (props: Props, ctx) {
     const lane = reactive({

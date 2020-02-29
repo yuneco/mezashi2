@@ -5,7 +5,7 @@
       <WaveShape class="wave wave2" :key="2" v-show="screen.isShow" :width="screen.width + 200" :height="screen.height" :count="11" color="#90cad1" />
       <WaveShape class="wave wave3" :key="3" v-show="screen.isShow" :width="screen.width + 200" :height="screen.height" :count="7" color="rgb(217, 235, 232)" />
       <div class="main" v-show="screen.isShow" :key="4">
-        <h1>Neko Mezashi Attack 2020<span class="sub">v2020.2.29.2</span></h1>
+        <h1>Neko Mezashi Attack 2020<span class="sub">v2020.2.29.3</span></h1>
         <div class="main-view">
           <StartView v-if="isStartView" @start="start" />
           <ResultView v-if="isResultView" :score="score" @top="screen.isResultClosed = true" @retry="start" />
