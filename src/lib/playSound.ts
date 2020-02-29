@@ -12,6 +12,7 @@ load('jump')
 load('jump2')
 load('gameover')
 load('shot')
+load('charge')
 
 const playSound = (name: string) => {
   const audio = snds[name]

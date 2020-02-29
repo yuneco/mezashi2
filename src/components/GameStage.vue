@@ -11,7 +11,7 @@
       :escCount="stageData.escCount"
     />
 
-    <div class="stageEventLayer" @click.capture.self="clickStage"></div>
+    <div class="stageEventLayer" @click.capture.self="clickStage" @mousedown="mousedownStage"></div>
     <div class="stage"
       :style="{
         transform: `translate(${stageData.cameraX}px, ${stageData.cameraY}px)`
@@ -78,7 +78,7 @@ export default createComponent({
     const tamaHomeComp = ref<InstanceType<typeof TamaHome>>(null)
     const planetLayerComp = ref<InstanceType<typeof PlanetLayer>>(null)
     const mezashiLayerComp = ref<InstanceType<typeof MezashiLayer>>(null)
-    const { fire, bulletCount } = useKatsuoCannon()
+    const { fire, fireBurst, bulletCount } = useKatsuoCannon()
 
     const activePlanet = computed(() => {
       const comp = planetLayerComp.value
@@ -107,7 +107,8 @@ export default createComponent({
       score: 0,
       escCount: 2,
       bulletCount: bulletCount,
-      isUnmounted: false
+      isUnmounted: false,
+      lastClickTime: 0
     })
 
     // 衝突判定
@@ -160,26 +161,31 @@ export default createComponent({
     }
 
     // メザシ発射
-    const fireMezashi = (destX: number, destY: number) => {
+    const fireMezashi = (destX: number, destY: number, pressDur = 0) => {
       const mezashiLayer = mezashiLayerComp.value
       const tama = tamaHomeComp.value
       if (!mezashiLayer || !tama) { return }
       const tamaPos = tama.getTamaPos()
       if (!tamaPos) { return }
-      const fired = fire()
+      const fireBursted = fireBurst(pressDur)
+      const fired = fireBursted || fire()
       if (!fired) { return } // 弾切れで発射できなかった
       const cameraPos = new Pos(-stageData.cameraX, -stageData.cameraY, 0)
       const tamaStagePos = tamaPos.add(cameraPos)
       const rad = Math.atan2((destY - tamaStagePos.y), (destX - tamaStagePos.x))
       const angle = rad / Math.PI * 180
-      mezashiLayer.fire(new Pos(tamaStagePos.x, tamaStagePos.y, angle))
+      mezashiLayer.fire(new Pos(tamaStagePos.x, tamaStagePos.y, angle), fireBursted)
       const tamaAngle = tamaPos.r
       const katsuoR = 360 - (tamaAngle - angle) % 360
       tamaHome.katsuoR = katsuoR
-      playSound('shot')
+      playSound(fireBursted ? 'jump2' : 'shot')
     }
     const clickStage = (ev: MouseEvent) => {
-      fireMezashi(ev.offsetX - stageData.cameraX, ev.offsetY - stageData.cameraY)
+      const pressTime = Date.now() - stageData.lastClickTime
+      fireMezashi(ev.offsetX - stageData.cameraX, ev.offsetY - stageData.cameraY, pressTime)
+    }
+    const mousedownStage = () => {
+      stageData.lastClickTime = Date.now()
     }
     const onMezashiHit = () => {
       if (stageData.isGameover) { return }
@@ -269,6 +275,7 @@ export default createComponent({
       stageData,
       gameover,
       clickStage,
+      mousedownStage,
       nextPlanet,
       escNow,
       tamaJump,

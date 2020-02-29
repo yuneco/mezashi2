@@ -3,6 +3,7 @@
     <Mezashi v-for="mezashi in mezashisData" :key="mezashi.id"
       ref="mezashiComps"
       :pos="mezashi.fireat"
+      :isBig="mezashi.isBig"
       :s="charaScale"
       @fin="onFinMezashi(mezashi)"
     />
@@ -17,6 +18,7 @@ import Pos from '../lib/Pos'
 interface MezashiData {
   id: string;
   fireat: Pos;
+  isBig: boolean;
 }
 
 export default createComponent({
@@ -30,10 +32,11 @@ export default createComponent({
     const mezashiComps = ref<InstanceType<typeof Mezashi>[]>(null)
     const mezashisData = reactive<MezashiData[]>([])
     /** 指定位置にメザシを追加 */
-    const fire = (pos: Pos) => {
+    const fire = (pos: Pos, isBig = false) => {
       mezashisData.push({
         id: `mezashi-${Math.random()}`,
-        fireat: pos
+        fireat: pos,
+        isBig
       })
     }
     /** メザシ終了時のコールバック = mezashisDataから対象メザシを削除 */
