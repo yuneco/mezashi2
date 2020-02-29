@@ -20,7 +20,7 @@ const playSound = (name: string) => {
     // console.warn(`No sound for: ${name}`)
     return
   }
-  playSnd(audio)
+  return playSnd(audio)
 }
 
 export default playSound

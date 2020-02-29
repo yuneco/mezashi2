@@ -4,6 +4,7 @@
       :level="stageData.level"
       :score="stageData.score"
       :bullet="stageData.bulletCount"
+      :isCharging="stageData.isCharging"
     />
     <GameController class="controller"
       @esc="escNow"
@@ -11,7 +12,13 @@
       :escCount="stageData.escCount"
     />
 
-    <div class="stageEventLayer" @click.capture.self="clickStage" @mousedown="mousedownStage"></div>
+    <div class="stageEventLayer"
+      @mousedown.capture.self.prevent="mousedownStage"
+      @mouseup.capture.self="clickStage"
+      @touchstart.capture.self.prevent="mousedownStage"
+      @touchend.capture.self="clickStage"
+    >
+    </div>
     <div class="stage"
       :style="{
         transform: `translate(${stageData.cameraX}px, ${stageData.cameraY}px)`
@@ -108,8 +115,13 @@ export default createComponent({
       escCount: 2,
       bulletCount: bulletCount,
       isUnmounted: false,
-      lastClickTime: 0
+      lastClickTime: 0,
+      isCharging: false
     })
+
+    const sounds: {[key: string]: Function|null } = {
+      charge: null
+    }
 
     // 衝突判定
     const collisionDetector = new CollisionDetector()
@@ -182,10 +194,19 @@ export default createComponent({
     }
     const clickStage = (ev: MouseEvent) => {
       const pressTime = Date.now() - stageData.lastClickTime
+      stageData.isCharging = false
+      if (sounds.charge) {
+        sounds.charge() // STOP
+      }
       fireMezashi(ev.offsetX - stageData.cameraX, ev.offsetY - stageData.cameraY, pressTime)
     }
     const mousedownStage = () => {
       stageData.lastClickTime = Date.now()
+      stageData.isCharging = true
+      const cb = playSound('charge')
+      if (cb) {
+        sounds.charge = cb
+      }
     }
     const onMezashiHit = () => {
       if (stageData.isGameover) { return }

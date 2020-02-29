@@ -1,3 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-declare function playSnd(audio: any): void
+type PlayPauseFunc = () => PlayPauseFunc
+declare function playSnd(audio: any): PlayPauseFunc
 export = playSnd;

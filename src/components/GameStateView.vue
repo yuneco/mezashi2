@@ -6,6 +6,7 @@
         <div class="area-contents">{{ level }}</div>
       </div>
       <div class="bullet">
+        <div class="chargeBar" :class="{ charging: isCharging }"></div>
         <div class="mezashis">
           <template v-if="bullet">
             <MezashiShape v-for="(mz, index) of mezashisState" :key="index"
@@ -35,7 +36,8 @@ export default createComponent({
   props: {
     level: { type: Number, default: 0 },
     bullet: { type: Number, default: 0 },
-    score: { type: Number, default: 0 }
+    score: { type: Number, default: 0 },
+    isCharging: { type: Boolean, default: false }
   },
   components: {
     MezashiShape
@@ -64,6 +66,7 @@ export default createComponent({
     height: 50px;
     background-color: rgb(217, 235, 232);
     text-align: center;
+    padding-top: 5px;
   }
   .level {
     flex-basis: 30%;
@@ -95,5 +98,18 @@ export default createComponent({
   font-weight: bold;
   letter-spacing: 0.3em;
   color: #316285;
+}
+.chargeBar {
+  position: absolute;
+  width: 0%;
+  height: 5px;
+  top: 0;
+  left: 0;
+  background-color: #6295a5;
+  transition: width 0ms;
+  &.charging {
+    width: 100%;
+    transition: width 2000ms;
+  }
 }
 </style>

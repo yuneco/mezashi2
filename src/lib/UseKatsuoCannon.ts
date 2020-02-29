@@ -2,7 +2,7 @@ import { reactive, computed } from '@vue/composition-api'
 
 const MAX_BULLET = 6
 const RELOAD_TIME = 1700
-const BURST_LOAD_TIME = 2800
+const BURST_LOAD_TIME = 2000
 
 const katsuoCannon = () => {
   const cannonState = reactive({

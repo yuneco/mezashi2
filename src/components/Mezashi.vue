@@ -39,7 +39,7 @@ export default createComponent({
       y: 0
     })
     const isActive = ref(true)
-    const baseScale = computed<number>(() => props.isBig ? 1.5 : 0.7)
+    const baseScale = computed<number>(() => props.isBig ? 1.3 : 0.7)
     const fire = async () => {
       await Tween.to(bodyPos, { x: 0 }, 10)
       await Tween.to(bodyPos, { x: LANE_LEN }, props.dur)
