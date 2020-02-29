@@ -126,22 +126,20 @@ export default createComponent({
 
     const jump = async () => {
       waitActionEnd(true)
+      if (jumpAct.jumpCount >= 3) { return } // ジャンプは3段まで（4段目には入らせない）
       jumpAct.jumpCount++
       if (jumpAct.jumpCount === 2) { return }
       if (jumpAct.jumpCount === 3) {
-        await Tween.to(jumpAct, { y: -350, sy: 0.8, r: -20 }, 500, 'ease-out')
+        await Tween.to(jumpAct, { y: -350, sy: 0.8, r: -20 }, 800, 'ease-out')
         await Tween.to(jumpAct, { y: 0, sy: 0.8, r: 0 }, 1300, 'ease-in')
         await Tween.to(jumpAct, { sy: 1.0 }, 300)
         jumpAct.jumpCount = 0
         ctx.emit('jumpend')
         return
       }
-      if (jumpAct.jumpCount >= 4) {
-        return
-      }
       ctx.emit('jumpstart')
       await Tween.to(jumpAct, { sy: 0.8 }, 100)
-      await Tween.to(jumpAct, { y: -350, sy: 1.1 }, 700, 'ease-out')
+      await Tween.to(jumpAct, { y: -350, sy: 1.1 }, 600, 'ease-out')
       if (jumpAct.jumpCount >= 2) {
         Tween.to(jumpAct, { y: -500, sy: 1 }, 1000, 'ease-out')
         await _turn(1500)
